@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WinTrack 配置</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: #f3f3f3;
+            color: #323232;
+        }
+        .title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #0078d4;
+            margin-bottom: 24px;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .field {
+            margin-bottom: 12px;
+        }
+        .field label {
+            display: block;
+            color: #605e5c;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .field input, .field textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .field input:focus, .field textarea:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn {
+            padding: 8px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background: #0078d4;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #106ebe;
+        }
+        .btn-secondary {
+            background: #f3f3f3;
+            color: #323232;
+            border: 1px solid #d1d1d1;
+        }
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .checkbox-row input {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">⚙️ WinTrack 配置</div>
+
+    <div class="section">
+        <div class="section-title">Webhook 配置</div>
+        <div class="field">
+            <label>URL</label>
+            <input type="url" id="webhookUrl" placeholder="https://your-webhook-url.com/...">
+        </div>
+        <div class="field">
+            <label>Body 模板 (使用 {{MARKDOWN}} 作为占位符)</label>
+            <textarea id="bodyTemplate" rows="3" placeholder='{"content": "{{MARKDOWN}}"}'></textarea>
+        </div>
+        <div class="field">
+            <label>Content-Type</label>
+            <input type="text" id="contentType" value="application/json">
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">开机/关机消息</div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="onBoot" checked>
+            <label for="onBoot">开机时发送消息</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="onShutdown" checked>
+            <label for="onShutdown">关机时发送消息</label>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">定时消息</div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="scheduleEnabled">
+            <label for="scheduleEnabled">启用定时提醒</label>
+        </div>
+        <div class="field">
+            <label>间隔 (分钟)</label>
+            <input type="number" id="scheduleInterval" value="60" min="1" max="1440">
+        </div>
+    </div>
+
+    <div class="buttons">
+        <button class="btn btn-secondary" id="cancelBtn">取消</button>
+        <button class="btn btn-primary" id="saveBtn">保存</button>
+    </div>
+
+    <script>
+        // 从 wry 传入的配置加载
+        window.loadConfig = function(config) {
+            if (config) {
+                document.getElementById('webhookUrl').value = config.webhook?.url || '';
+                document.getElementById('bodyTemplate').value = config.webhook?.body_template || '{"content": "{{MARKDOWN}}"}';
+                document.getElementById('contentType').value = config.webhook?.content_type || 'application/json';
+                document.getElementById('onBoot').checked = config.session_messages?.on_boot !== false;
+                document.getElementById('onShutdown').checked = config.session_messages?.on_shutdown !== false;
+                const schedule = config.scheduled_messages?.[0];
+                document.getElementById('scheduleEnabled').checked = schedule?.enabled || false;
+                document.getElementById('scheduleInterval').value = schedule?.interval_minutes || 60;
+            }
+        };
+
+        window.getConfig = function() {
+            return {
+                webhook: {
+                    url: document.getElementById('webhookUrl').value,
+                    body_template: document.getElementById('bodyTemplate').value || '{"content": "{{MARKDOWN}}"}',
+                    content_type: document.getElementById('contentType').value || 'application/json'
+                },
+                session_messages: {
+                    on_boot: document.getElementById('onBoot').checked,
+                    on_shutdown: document.getElementById('onShutdown').checked
+                },
+                scheduled_messages: [{
+                    interval_minutes: parseInt(document.getElementById('scheduleInterval').value) || 60,
+                    enabled: document.getElementById('scheduleEnabled').checked
+                }]
+            };
+        };
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const cfg = window.getConfig();
+            window.location.href = 'wintrack://save?config=' + encodeURIComponent(JSON.stringify(cfg));
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            window.location.href = 'wintrack://close';
+        });
+
+        // 页面加载时应用注入的配置
+        if (typeof __WINTRACK_CONFIG__ !== 'undefined') {
+            window.loadConfig(__WINTRACK_CONFIG__);
+        }
+    </script>
+</body>
+</html>

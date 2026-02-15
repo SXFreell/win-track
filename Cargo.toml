@@ -1,0 +1,32 @@
+[package]
+name = "win-track"
+version = "0.1.0"
+edition = "2021"
+description = "Windows 使用日志统计与提醒应用"
+
+[dependencies]
+# 窗口与事件循环 (需与 tray-icon 兼容)
+tao = "0.33"
+# WebView 配置窗口 (Fluent UI)
+wry = "0.38"
+# 系统托盘
+tray-icon = "0.21"
+# 异步运行时
+tokio = { version = "1", features = ["full"] }
+# HTTP 客户端
+reqwest = { version = "0.11", features = ["json"] }
+# 序列化
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# 时间处理
+chrono = { version = "0.4", features = ["serde"] }
+# 目录和路径
+directories = "5"
+# 日志
+log = "0.4"
+env_logger = "0.11"
+# 图像 (托盘图标)
+image = "0.25"
+# 数据 URL
+data-url = "0.3"
+urlencoding = "2"
